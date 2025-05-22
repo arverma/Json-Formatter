@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>JSON Formatter Pro</title>
+  <link rel="stylesheet" href="codemirror/codemirror.min.css">
+  <link rel="stylesheet" href="codemirror/theme/material.min.css">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" href="codemirror/addon/fold/foldgutter.min.css">
+</head>
+<body>
+  <div class="container">
+    <div class="editor-area" id="inputArea">
+      <div class="editor-overlay-wrapper">
+        <div id="jsonInputEditor"></div>
+        <div id="inputStatusOverlay" class="status-overlay"></div>
+      </div>
+    </div>
+    <div class="splitter" id="splitter"></div>
+    <div class="editor-area" id="outputArea">
+      <div class="editor-overlay-wrapper">
+        <div id="jsonOutputEditor"></div>
+      </div>
+    </div>
+  </div>
+  <script src="codemirror/codemirror.min.js"></script>
+  <script src="codemirror/javascript.min.js"></script>
+  <script src="script.js"></script>
+  <script src="codemirror/addon/fold/foldcode.min.js"></script>
+  <script src="codemirror/addon/fold/foldgutter.min.js"></script>
+  <script src="codemirror/addon/fold/brace-fold.min.js"></script>
+</body>
+</html> 
