@@ -1,28 +1,28 @@
+// src/script.js
+// Main logic for JSON Formatter Pro Chrome extension side panel.
+// Handles CodeMirror editor setup, live formatting, theme switching, and UI resizing.
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Function to create a placeholder for special characters
+  // --- CodeMirror Editor Initialization ---
+
+  // Creates a placeholder for special characters (e.g., non-breaking space, tab)
   function makeSpecialCharPlaceholder(char) {
     const span = document.createElement('span');
     if (char === '\u00a0') { // Non-breaking space
       span.textContent = ' '; // Render as a regular space
     } else if (char === '\t') { // Tab character
-      // You can choose to render tabs as multiple spaces or a specific tab symbol
       span.innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;'; // Example: 4 spaces
       span.className = 'cm-tab-placeholder';
     } else {
-      // For other special characters, you might want a visual indicator
-      // or render them as they are if the font supports them and they are intended.
-      // For now, let's try to make them less obtrusive or replace with space.
       span.textContent = ' '; // Default to a space for other caught special chars
     }
-    // span.className = 'cm-specialchar-placeholder'; // General class if needed
     return span;
   }
 
-  // Regex for special characters - more comprehensive
-  // This includes NBSP, tabs, and some other common problematic whitespace/control chars.
-  // Adjust as needed based on what characters you find are causing issues.
+  // Regex for special/control characters to highlight in the editor
   const specialCharsRegex = /[\u00a0\t\u2000-\u200F\u2028-\u202F\u205F-\u206F]+/g;
 
+  // Shared options for both editors
   const editorOptions = {
     mode: { name: 'javascript', json: true },
     lineNumbers: true,
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     specialCharPlaceholder: makeSpecialCharPlaceholder
   };
 
+  // Input editor: user types/pastes JSON here
   const inputEditor = CodeMirror(document.getElementById('jsonInputEditor'), {
     ...editorOptions,
     autofocus: true,
@@ -44,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     theme: 'material',
   });
 
+  // Output editor: shows formatted/validated JSON
   const outputEditor = CodeMirror(document.getElementById('jsonOutputEditor'), {
     ...editorOptions,
     foldGutter: true,
@@ -57,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   outputEditor.refresh();
   inputEditor.focus();
 
-  // --- Splitter logic for draggable resizing ---
+  // --- Splitter Logic: Draggable Resizing Between Editors ---
   const splitter = document.getElementById('splitter');
   const inputArea = document.getElementById('inputArea');
   const outputArea = document.getElementById('outputArea');
@@ -67,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastInputHeight = null;
   let lastOutputHeight = null;
 
+  // Set initial editor heights based on container size and previous state
   function setInitialEditorHeights() {
     const containerHeight = container.clientHeight;
     const splitterHeight = splitter.offsetHeight || 8;
@@ -92,28 +95,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set initial heights after layout is ready
   setInitialEditorHeights();
 
+  // Adjust editor heights on window resize
   window.addEventListener('resize', () => {
     setInitialEditorHeights();
     inputEditor.refresh();
     outputEditor.refresh();
   });
 
+  // Splitter drag state
   let isDragging = false;
   let startY = 0;
   let startInputHeight = 0;
   let startOutputHeight = 0;
 
+  // Start dragging splitter
   splitter.addEventListener('mousedown', (e) => {
     isDragging = true;
     splitter.classList.add('active');
     startY = e.clientY;
-    // Use flex-basis or fallback to offsetHeight
     startInputHeight = parseInt(window.getComputedStyle(inputArea).flexBasis) || inputArea.offsetHeight;
     startOutputHeight = parseInt(window.getComputedStyle(outputArea).flexBasis) || outputArea.offsetHeight;
     document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
   });
 
+  // Handle splitter drag
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     const containerRect = container.getBoundingClientRect();
@@ -139,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     outputEditor.refresh();
   });
 
+  // Stop dragging splitter
   document.addEventListener('mouseup', () => {
     if (isDragging) {
       isDragging = false;
@@ -150,6 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // --- Ensure Dummy Line for Gutter Consistency ---
+  // Ensures the gutter is always visible, even when the editor is empty
   function ensureEditorNotEmpty(editor) {
     if (!editor.getValue().trim()) {
       editor.setValue('\u00a0');
@@ -160,7 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
   ensureEditorNotEmpty(inputEditor);
   ensureEditorNotEmpty(outputEditor);
 
-  // --- Auto-format on input change ---
+  // --- Live JSON Formatting and Validation ---
+  // Formats and validates JSON from input, displays in output editor
   function autoFormatJson() {
     let rawJson = inputEditor.getValue();
     if (!rawJson.trim()) {
@@ -205,13 +215,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Listen for changes in the input editor and auto-format
   inputEditor.on('change', autoFormatJson);
   autoFormatJson();
 
-  // Minimal status overlay for line/column (top-right in editor)
+  // --- Theme Switching and Status Overlay ---
+  // Handles light/dark mode and status overlay updates
   const inputStatusOverlay = document.getElementById('inputStatusOverlay');
   const THEME_KEY = 'jsonFormatterTheme';
 
+  // Set the theme for both editors and update overlay
   function setTheme(theme) {
     if (theme === 'dark') {
       document.body.classList.add('dark-mode');
@@ -230,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateInputStatusOverlay();
   }
 
+  // Toggle between light and dark mode
   function toggleTheme() {
     const isDark = document.body.classList.contains('dark-mode');
     setTheme(isDark ? 'light' : 'dark');
@@ -238,10 +252,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // On load, set theme from storage
   setTheme(localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light');
 
-  // Make overlay clickable
+  // Make overlay clickable to toggle theme
   inputStatusOverlay.addEventListener('click', toggleTheme);
 
-  // When updating status, show the icon
+  // Update the status overlay with current line/column and theme icon
   function updateInputStatusOverlay() {
     const cursor = inputEditor.getCursor();
     const icon = document.body.classList.contains('dark-mode') ? '🌙 ' : '💡 ';

@@ -1,6 +1,11 @@
+// background.js
+// Service worker for JSON Formatter Pro Chrome extension.
+// Handles side panel open/close logic, tab updates, and robust state management.
+
 let panelState = {};
 
-// Handles the extension icon click to toggle the side panel
+// --- Extension Icon Click: Toggle Side Panel ---
+// Handles the extension icon click to toggle the side panel for the current tab
 chrome.action.onClicked.addListener((tab) => {
   const tabId = tab.id;
 
@@ -25,15 +30,17 @@ chrome.action.onClicked.addListener((tab) => {
   }
 });
 
-// Listen for manual panel close (if supported)
+// --- Listen for Manual Panel Close (if supported) ---
 if (chrome.sidePanel.onPanelClosed) {
   chrome.sidePanel.onPanelClosed.addListener((event) => {
     const tabId = event.tabId;
+    // User closed the side panel manually
     console.log("🔒 Side panel closed by user");
   });
 }
 
-// Ensures the side panel is available (path is set) on relevant tabs.
+// --- Ensure Side Panel is Available on Relevant Tabs ---
+// Sets the side panel path for all tabs except chrome:// and about://
 // Does not force the panel open or enabled by default.
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status !== 'complete' || !tab.id || !tab.url) {
@@ -42,12 +49,14 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   try {
     const url = new URL(tab.url);
     if (url.protocol === 'chrome:' || url.protocol === 'about:') {
+      // Disable side panel on internal Chrome/edge/about pages
       const currentOptions = await chrome.sidePanel.getOptions({ tabId });
       if (currentOptions && (currentOptions.enabled || currentOptions.path)) {
         await chrome.sidePanel.setOptions({ tabId, path: 'sidepanel.html', enabled: false });
       }
       return;
     }
+    // Ensure side panel path is set for all other tabs
     const currentOptions = await chrome.sidePanel.getOptions({ tabId });
     if (!currentOptions || currentOptions.path !== 'sidepanel.html') {
       await chrome.sidePanel.setOptions({
@@ -57,6 +66,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       });
     }
   } catch (error) {
+    // Ignore common errors (e.g., tab closed, invalid tab ID)
     if (
       error.message.includes('No tab with id') ||
       error.message.includes('No current window') ||
