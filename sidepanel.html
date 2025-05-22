@@ -1,14 +1,21 @@
+<!--
+  sidepanel.html
+  Main UI for JSON Formatter Pro Chrome extension side panel.
+  Loads CodeMirror editors, layout, and all required scripts/styles.
+-->
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <title>JSON Formatter Pro</title>
+  <!-- --- Stylesheets: CodeMirror, Theme, App Styles, Addons --- -->
   <link rel="stylesheet" href="codemirror/codemirror.min.css">
   <link rel="stylesheet" href="codemirror/theme/material.min.css">
   <link rel="stylesheet" type="text/css" href="src/style.css">
   <link rel="stylesheet" href="codemirror/addon/fold/foldgutter.min.css">
 </head>
 <body>
+  <!-- --- Main Layout: Input Editor, Splitter, Output Editor --- -->
   <div class="container">
     <div class="editor-area" id="inputArea">
       <div class="editor-overlay-wrapper">
@@ -23,6 +30,7 @@
       </div>
     </div>
   </div>
+  <!-- --- Scripts: CodeMirror Core, Modes, App Logic, Addons --- -->
   <script src="codemirror/codemirror.min.js"></script>
   <script src="codemirror/javascript.min.js"></script>
   <script src="src/script.js"></script>
